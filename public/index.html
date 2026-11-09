@@ -216,7 +216,7 @@
           C: ["Atomic batch, one bad action", "Permit2 is all-or-nothing. The balance drops after signing; the simulation catches it, the batch is sent anyway to show the revert, then the agent re-plans."],
         },
         happened: "happened", notHappened: "did not happen", gasUsed: "gas used", vsOne: (a, b, p) => `Receipts: batch ${a} gas vs ${b} one by one — ${p}% less`, est: (e, r) => `The plan had estimated ${e} for the batch; the receipt used ${r}.`,
-        reverted: "Sent anyway → reverted", replanned: "Re-planned → clean batch", forkTx: "fork transaction (not on the public explorer)",
+        reverted: "Sent anyway → reverted", replanned: "Re-planned → clean batch", forkTx: "fork tx", forkTxLong: "a transaction on the Anvil fork — not on the public explorer",
         howTitle: "How it works",
         how: [["1 · Check each action", "Balance left after the actions before it, USDC blacklist, a simulated transfer. A wallet with code or an EIP-7702 delegation is refused (signatures would go through EIP-1271)."], ["2 · Apply the policy", "skip-failed builds the batch without the actions that would fail; all-or-nothing refuses the whole batch. Either way the report names each action and the reason."], ["3 · Sign once, send once", "Permit2: one signature for all transfers, atomic. EIP-3009: one gasless signature per transfer, batched by Multicall3 with per-action failure."], ["4 · Verify the receipt", "Every planned action is matched to a Transfer event. What did not happen is re-run at the parent block to say why; unplanned transfers are flagged."]],
         footer: (r) => `Recorded on Pharos Pacific Mainnet ${r}. Nothing on this page signs or sends a transaction.`,
@@ -263,7 +263,7 @@
           C: ["Lote atômico, uma ação ruim", "O Permit2 é tudo-ou-nada. O saldo cai depois da assinatura; a simulação pega, o lote é enviado mesmo assim para mostrar o revert, e o agente replaneja."],
         },
         happened: "aconteceu", notHappened: "não aconteceu", gasUsed: "gás usado", vsOne: (a, b, p) => `Recibos: lote ${a} de gás contra ${b} uma por uma — ${p}% a menos`, est: (e, r) => `O plano tinha estimado ${e} para o lote; o recibo usou ${r}.`,
-        reverted: "Enviado mesmo assim → reverteu", replanned: "Replanejado → lote limpo", forkTx: "transação do fork (não está no explorer público)",
+        reverted: "Enviado mesmo assim → reverteu", replanned: "Replanejado → lote limpo", forkTx: "tx do fork", forkTxLong: "uma transação no fork Anvil — não está no explorer público",
         howTitle: "Como funciona",
         how: [["1 · Confere cada ação", "Saldo que sobra depois das ações anteriores, blacklist do USDC, transferência simulada. Carteira com código ou delegação EIP-7702 é recusada (a assinatura passaria pelo EIP-1271)."], ["2 · Aplica a política", "skip-failed monta o lote sem as ações que falhariam; all-or-nothing recusa o lote inteiro. Nos dois casos o relatório nomeia cada ação e o motivo."], ["3 · Assina uma vez, envia uma vez", "Permit2: uma assinatura para todas as transferências, atômico. EIP-3009: uma assinatura sem gás por transferência, agrupadas pelo Multicall3 com falha por ação."], ["4 · Confere o recibo", "Cada ação planejada é casada com um evento Transfer. O que não aconteceu é refeito no bloco pai para dizer o porquê; transferências fora do plano são apontadas."]],
         footer: (r) => `Gravado na Pharos Pacific Mainnet em ${r}. Nada nesta página assina ou envia transação.`,
@@ -454,7 +454,7 @@
     function renderFork() {
       if (!fork) return;
       $("forkSub").textContent = t().forkSub(n0(fork.A.plan.block.number));
-      const h = (x) => `<div class="hash">${t().forkTx}: ${x}</div>`;
+      const h = (x) => `<div class="hash" title="${t().forkTxLong}: ${x}">${t().forkTx} · ${x.slice(0, 12)}…${x.slice(-8)}</div>`;
       const A = fork.A, B = fork.B, C = fork.C;
       const pA = ((Number(A.oneByOneGasUsed) - Number(A.gasUsed)) / Number(A.oneByOneGasUsed)) * 100;
       $("fork").innerHTML = [

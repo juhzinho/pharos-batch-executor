@@ -5,8 +5,8 @@
 //      spends USDC; the batch runs anyway → 3 transfers happen, 2 do not, each with its reason
 //   C  permit2 is atomic: the same kind of change makes the whole transaction revert → nothing moves; the agent
 //      re-plans (pre-flight now drops the failing action) and the clean batch goes through
-// Writes public/runs/fork-proof.json.
-import { writeFile } from "node:fs/promises";
+// Writes .batch/fork-proof.json; with --record, the published public/runs/fork-proof.json (the site and README cite it).
+import { mkdir, writeFile } from "node:fs/promises";
 import { createPublicClient, createWalletClient, encodeFunctionData, http, pad, parseSignature, toHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { startFork } from "../lib/fork.js";
@@ -128,8 +128,12 @@ try {
   }
   out.C = { plan: pc, simulation: asmC.simulation, reverted: { hash: hashC, status: rcC.status, verify: vC }, replan, recovered, actions: batchC.actions.map((a) => ({ ...a, amount: a.amount.toString() })), change: "1,000 USDC spent elsewhere after signing (5,000 left for 6,000 of transfers)" };
 
-  await writeFile(new URL("../public/runs/fork-proof.json", import.meta.url), JSON.stringify({ recordedAt: new Date().toISOString(), network: "Anvil fork of Pharos Pacific", note: "test wallets: fresh keys funded on the fork only", ...out }, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
-  log("wrote public/runs/fork-proof.json");
+  // fresh keys each run → slightly different signature bytes → a few gas units of difference: the published proof
+  // changes only on purpose
+  const target = process.argv.includes("--record") ? "public/runs/fork-proof.json" : ".batch/fork-proof.json";
+  await mkdir(new URL("../.batch/", import.meta.url), { recursive: true });
+  await writeFile(new URL(`../${target}`, import.meta.url), JSON.stringify({ recordedAt: new Date().toISOString(), network: "Anvil fork of Pharos Pacific", note: "test wallets: fresh keys funded on the fork only", ...out }, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
+  log(`wrote ${target}`);
 } finally {
   fork.stop();
 }
