@@ -1,0 +1,286 @@
+{
+  "recordedAt": "2026-11-09T13:55:29.384Z",
+  "network": "Pharos Pacific Mainnet",
+  "batch": {
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "permit2",
+    "policy": "skip-failed",
+    "approve": "standing",
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x1111111111111111111111111111111111111111",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "1200000000",
+        "label": "payroll — Ana"
+      },
+      {
+        "index": 2,
+        "to": "0x2222222222222222222222222222222222222222",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "850500000",
+        "label": "payroll — Bruno"
+      },
+      {
+        "index": 3,
+        "to": "0x3333333333333333333333333333333333333333",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "999999000000",
+        "label": "typo: one zero too many"
+      },
+      {
+        "index": 4,
+        "to": "0x4444444444444444444444444444444444444444",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "2400000000",
+        "label": "payroll — Carla"
+      },
+      {
+        "index": 5,
+        "to": "0x5555555555555555555555555555555555555555",
+        "token": "WPROS",
+        "tokenAddress": "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0",
+        "decimals": 18,
+        "amount": "12500000000000000000",
+        "label": "gas top-up — Davi"
+      }
+    ],
+    "warnings": []
+  },
+  "plan": {
+    "block": {
+      "number": 22569153,
+      "timestamp": 1794232606
+    },
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "permit2",
+    "policy": "skip-failed",
+    "wallet": {
+      "pros": "304168446479571055836064",
+      "eip7702": false,
+      "hasCode": false,
+      "balance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "139890427209",
+        "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0": "283979622030202833595"
+      },
+      "permit2Allowance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "0",
+        "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0": "0"
+      }
+    },
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x1111111111111111111111111111111111111111",
+        "token": "USDC",
+        "amount": "1200000000",
+        "decimals": 6,
+        "label": "payroll — Ana",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 2,
+        "to": "0x2222222222222222222222222222222222222222",
+        "token": "USDC",
+        "amount": "850500000",
+        "decimals": 6,
+        "label": "payroll — Bruno",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 3,
+        "to": "0x3333333333333333333333333333333333333333",
+        "token": "USDC",
+        "amount": "999999000000",
+        "decimals": 6,
+        "label": "typo: one zero too many",
+        "ok": false,
+        "reason": "insufficient USDC: 137,839.927209 left after the actions before it, 999,999 needed"
+      },
+      {
+        "index": 4,
+        "to": "0x4444444444444444444444444444444444444444",
+        "token": "USDC",
+        "amount": "2400000000",
+        "decimals": 6,
+        "label": "payroll — Carla",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 5,
+        "to": "0x5555555555555555555555555555555555555555",
+        "token": "WPROS",
+        "amount": "12500000000000000000",
+        "decimals": 18,
+        "label": "gas top-up — Davi",
+        "ok": true,
+        "reason": null
+      }
+    ],
+    "warnings": [],
+    "blockers": [],
+    "outcome": "partial",
+    "summary": "4 of 5 actions go into the batch; skipped: #3 (insufficient USDC: 137,839.927209 left after the actions before it, 999,999 needed).",
+    "batchActions": [
+      1,
+      2,
+      4,
+      5
+    ],
+    "deadline": 1794236206,
+    "sign": {
+      "kind": "permit2",
+      "typedData": {
+        "domain": {
+          "name": "Permit2",
+          "chainId": 1672,
+          "verifyingContract": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+        },
+        "types": {
+          "PermitBatchTransferFrom": [
+            {
+              "name": "permitted",
+              "type": "TokenPermissions[]"
+            },
+            {
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ],
+          "TokenPermissions": [
+            {
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256"
+            }
+          ]
+        },
+        "primaryType": "PermitBatchTransferFrom",
+        "message": {
+          "permitted": [
+            {
+              "token": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+              "amount": "1200000000"
+            },
+            {
+              "token": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+              "amount": "850500000"
+            },
+            {
+              "token": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+              "amount": "2400000000"
+            },
+            {
+              "token": "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0",
+              "amount": "12500000000000000000"
+            }
+          ],
+          "spender": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+          "nonce": "384220505208821952135134257543322873552587046880519331695793323172557787951",
+          "deadline": "1794236206"
+        }
+      }
+    },
+    "approvals": [
+      {
+        "label": "Approve USDC for Permit2 (standing allowance, once)",
+        "tx": {
+          "chainId": 1672,
+          "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+          "to": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+          "data": "0x095ea7b3000000000000000000000000000000000022d473030f116ddee9f6b43ac78ba3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "value": "0x0",
+          "gas": "0x150aa",
+          "maxFeePerGas": "0x4a817c800",
+          "maxPriorityFeePerGas": "0x0",
+          "nonce": "0x0",
+          "type": "0x2"
+        },
+        "gas": "71822",
+        "cast": "cast send 0xC879C018dB60520F4355C26eD1a6D572cdAC1815 \"approve(address,uint256)\" 0x000000000022D473030F116dDEE9F6B43aC78BA3 115792089237316195423570985008687907853269984665640564039457584007913129639935 --rpc-url https://rpc.pharos.xyz"
+      },
+      {
+        "label": "Approve WPROS for Permit2 (standing allowance, once)",
+        "tx": {
+          "chainId": 1672,
+          "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+          "to": "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0",
+          "data": "0x095ea7b3000000000000000000000000000000000022d473030f116ddee9f6b43ac78ba3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "value": "0x0",
+          "gas": "0x11612",
+          "maxFeePerGas": "0x4a817c800",
+          "maxPriorityFeePerGas": "0x0",
+          "nonce": "0x1",
+          "type": "0x2"
+        },
+        "gas": "59322",
+        "cast": "cast send 0x52C48d4213107b20bC583832b0d951FB9CA8F0B0 \"approve(address,uint256)\" 0x000000000022D473030F116dDEE9F6B43aC78BA3 115792089237316195423570985008687907853269984665640564039457584007913129639935 --rpc-url https://rpc.pharos.xyz"
+      }
+    ],
+    "nextNonce": 2,
+    "gas": {
+      "baseFeeGwei": 10,
+      "prosUsd": 0.505659358457458,
+      "individual": {
+        "gas": "262668",
+        "pros": 0.00262668,
+        "usd": 0.001328205323673036,
+        "perAction": [
+          "58620",
+          "58635",
+          "79786",
+          "65627"
+        ],
+        "transactions": 4
+      },
+      "batch": {
+        "gas": "219348",
+        "pros": 0.00219348,
+        "usd": 0.001109153689589265,
+        "transactions": 1,
+        "measuredWith": "an equivalent test signer (the wallet has not signed yet): same calls and storage writes, balances applied by state override"
+      },
+      "approval": {
+        "gas": "131144",
+        "pros": 0.00131144,
+        "usd": 0.0006631419090554488,
+        "mode": "standing",
+        "note": "once per token: a standing ERC-20 allowance to Permit2; later batches skip it",
+        "firstBatchTotal": "350492",
+        "firstBatchVsIndividualPct": -33.43536327226765,
+        "breakEvenBatch": 4
+      },
+      "saving": {
+        "gas": "43320",
+        "pct": 16.49230206953264
+      },
+      "other": null,
+      "steps": {
+        "individual": "4 transactions, 4 wallet confirmations",
+        "batch": "1 signature + 1 transaction (+ 2 one-time approvals)"
+      }
+    }
+  }
+}

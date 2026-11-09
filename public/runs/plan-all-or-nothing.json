@@ -1,0 +1,136 @@
+{
+  "recordedAt": "2026-11-09T13:55:31.851Z",
+  "network": "Pharos Pacific Mainnet",
+  "batch": {
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "permit2",
+    "policy": "all-or-nothing",
+    "approve": "standing",
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x1111111111111111111111111111111111111111",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "1200000000",
+        "label": "payroll — Ana"
+      },
+      {
+        "index": 2,
+        "to": "0x2222222222222222222222222222222222222222",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "850500000",
+        "label": "payroll — Bruno"
+      },
+      {
+        "index": 3,
+        "to": "0x3333333333333333333333333333333333333333",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "999999000000",
+        "label": "typo: one zero too many"
+      },
+      {
+        "index": 4,
+        "to": "0x4444444444444444444444444444444444444444",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "2400000000",
+        "label": "payroll — Carla"
+      },
+      {
+        "index": 5,
+        "to": "0x5555555555555555555555555555555555555555",
+        "token": "WPROS",
+        "tokenAddress": "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0",
+        "decimals": 18,
+        "amount": "12500000000000000000",
+        "label": "gas top-up — Davi"
+      }
+    ],
+    "warnings": []
+  },
+  "plan": {
+    "block": {
+      "number": 22569162,
+      "timestamp": 1794232613
+    },
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "permit2",
+    "policy": "all-or-nothing",
+    "wallet": {
+      "pros": "304168446479571055836064",
+      "eip7702": false,
+      "hasCode": false,
+      "balance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "139890427209",
+        "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0": "283979622030202833595"
+      },
+      "permit2Allowance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "0",
+        "0x52C48d4213107b20bC583832b0d951FB9CA8F0B0": "0"
+      }
+    },
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x1111111111111111111111111111111111111111",
+        "token": "USDC",
+        "amount": "1200000000",
+        "decimals": 6,
+        "label": "payroll — Ana",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 2,
+        "to": "0x2222222222222222222222222222222222222222",
+        "token": "USDC",
+        "amount": "850500000",
+        "decimals": 6,
+        "label": "payroll — Bruno",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 3,
+        "to": "0x3333333333333333333333333333333333333333",
+        "token": "USDC",
+        "amount": "999999000000",
+        "decimals": 6,
+        "label": "typo: one zero too many",
+        "ok": false,
+        "reason": "insufficient USDC: 137,839.927209 left after the actions before it, 999,999 needed"
+      },
+      {
+        "index": 4,
+        "to": "0x4444444444444444444444444444444444444444",
+        "token": "USDC",
+        "amount": "2400000000",
+        "decimals": 6,
+        "label": "payroll — Carla",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 5,
+        "to": "0x5555555555555555555555555555555555555555",
+        "token": "WPROS",
+        "amount": "12500000000000000000",
+        "decimals": 18,
+        "label": "gas top-up — Davi",
+        "ok": true,
+        "reason": null
+      }
+    ],
+    "warnings": [],
+    "blockers": [],
+    "outcome": "refused",
+    "summary": "All-or-nothing: action 3 would fail, so no batch is built (nothing to sign, nothing moves)."
+  }
+}

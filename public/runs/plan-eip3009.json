@@ -1,0 +1,348 @@
+{
+  "recordedAt": "2026-11-09T13:55:36.792Z",
+  "network": "Pharos Pacific Mainnet",
+  "batch": {
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "eip3009",
+    "policy": "skip-failed",
+    "approve": "standing",
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x6666666666666666666666666666666666666666",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "1000000000",
+        "label": "vendor 1"
+      },
+      {
+        "index": 2,
+        "to": "0x7777777777777777777777777777777777777777",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "1500000000",
+        "label": "vendor 2"
+      },
+      {
+        "index": 3,
+        "to": "0x8888888888888888888888888888888888888888",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "2000000000",
+        "label": "vendor 3"
+      },
+      {
+        "index": 4,
+        "to": "0x9999999999999999999999999999999999999999",
+        "token": "USDC",
+        "tokenAddress": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815",
+        "decimals": 6,
+        "amount": "2500000000",
+        "label": "vendor 4"
+      }
+    ],
+    "warnings": []
+  },
+  "plan": {
+    "block": {
+      "number": 22569165,
+      "timestamp": 1794232616
+    },
+    "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+    "engine": "eip3009",
+    "policy": "skip-failed",
+    "wallet": {
+      "pros": "304168446479571055836064",
+      "eip7702": false,
+      "hasCode": false,
+      "balance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "139890427209"
+      },
+      "permit2Allowance": {
+        "0xC879C018dB60520F4355C26eD1a6D572cdAC1815": "0"
+      }
+    },
+    "actions": [
+      {
+        "index": 1,
+        "to": "0x6666666666666666666666666666666666666666",
+        "token": "USDC",
+        "amount": "1000000000",
+        "decimals": 6,
+        "label": "vendor 1",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 2,
+        "to": "0x7777777777777777777777777777777777777777",
+        "token": "USDC",
+        "amount": "1500000000",
+        "decimals": 6,
+        "label": "vendor 2",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 3,
+        "to": "0x8888888888888888888888888888888888888888",
+        "token": "USDC",
+        "amount": "2000000000",
+        "decimals": 6,
+        "label": "vendor 3",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "index": 4,
+        "to": "0x9999999999999999999999999999999999999999",
+        "token": "USDC",
+        "amount": "2500000000",
+        "decimals": 6,
+        "label": "vendor 4",
+        "ok": true,
+        "reason": null
+      }
+    ],
+    "warnings": [],
+    "blockers": [],
+    "outcome": "ready",
+    "summary": "All 4 actions fit in one transaction.",
+    "batchActions": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "deadline": 1794236216,
+    "sign": {
+      "kind": "eip3009",
+      "typedData": [
+        {
+          "domain": {
+            "name": "USDC",
+            "version": "2",
+            "chainId": 1672,
+            "verifyingContract": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815"
+          },
+          "types": {
+            "TransferWithAuthorization": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "name": "validAfter",
+                "type": "uint256"
+              },
+              {
+                "name": "validBefore",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "bytes32"
+              }
+            ]
+          },
+          "primaryType": "TransferWithAuthorization",
+          "message": {
+            "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+            "to": "0x6666666666666666666666666666666666666666",
+            "value": "1000000000",
+            "validAfter": "0",
+            "validBefore": "1794236216",
+            "nonce": "0xee8bb544b9a064d99365e029fb6e47e0dd42f6ab5c0183bad85278b806705648"
+          }
+        },
+        {
+          "domain": {
+            "name": "USDC",
+            "version": "2",
+            "chainId": 1672,
+            "verifyingContract": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815"
+          },
+          "types": {
+            "TransferWithAuthorization": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "name": "validAfter",
+                "type": "uint256"
+              },
+              {
+                "name": "validBefore",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "bytes32"
+              }
+            ]
+          },
+          "primaryType": "TransferWithAuthorization",
+          "message": {
+            "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+            "to": "0x7777777777777777777777777777777777777777",
+            "value": "1500000000",
+            "validAfter": "0",
+            "validBefore": "1794236216",
+            "nonce": "0x515c1aea47179b5f1b405a329e03ed03e97fea83d5725403ba1e6cde871b36d0"
+          }
+        },
+        {
+          "domain": {
+            "name": "USDC",
+            "version": "2",
+            "chainId": 1672,
+            "verifyingContract": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815"
+          },
+          "types": {
+            "TransferWithAuthorization": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "name": "validAfter",
+                "type": "uint256"
+              },
+              {
+                "name": "validBefore",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "bytes32"
+              }
+            ]
+          },
+          "primaryType": "TransferWithAuthorization",
+          "message": {
+            "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+            "to": "0x8888888888888888888888888888888888888888",
+            "value": "2000000000",
+            "validAfter": "0",
+            "validBefore": "1794236216",
+            "nonce": "0x35a619b79e0c30b0054e492b76a36fdab7cfffa72898855954c15ed65ac77192"
+          }
+        },
+        {
+          "domain": {
+            "name": "USDC",
+            "version": "2",
+            "chainId": 1672,
+            "verifyingContract": "0xC879C018dB60520F4355C26eD1a6D572cdAC1815"
+          },
+          "types": {
+            "TransferWithAuthorization": [
+              {
+                "name": "from",
+                "type": "address"
+              },
+              {
+                "name": "to",
+                "type": "address"
+              },
+              {
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "name": "validAfter",
+                "type": "uint256"
+              },
+              {
+                "name": "validBefore",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "bytes32"
+              }
+            ]
+          },
+          "primaryType": "TransferWithAuthorization",
+          "message": {
+            "from": "0x6eA08ca8F313d860808ef7431fc72c6FbcF4A72D",
+            "to": "0x9999999999999999999999999999999999999999",
+            "value": "2500000000",
+            "validAfter": "0",
+            "validBefore": "1794236216",
+            "nonce": "0xdd4eaff8a9d42af38dd1934c24b83fcbd8efd2f87b199d216a19babd12d2e932"
+          }
+        }
+      ]
+    },
+    "approvals": [],
+    "nextNonce": 0,
+    "gas": {
+      "baseFeeGwei": 10,
+      "prosUsd": 0.505659358457458,
+      "individual": {
+        "gas": "319144",
+        "pros": 0.00319144,
+        "usd": 0.0016137815029554697,
+        "perAction": [
+          "79786",
+          "79786",
+          "79786",
+          "79786"
+        ],
+        "transactions": 4
+      },
+      "batch": {
+        "gas": "389755",
+        "pros": 0.00389755,
+        "usd": 0.0019708326325558654,
+        "transactions": 1,
+        "measuredWith": "an equivalent test signer (the wallet has not signed yet): same calls and storage writes, balances applied by state override"
+      },
+      "approval": null,
+      "saving": {
+        "gas": "-70611",
+        "pct": -22.125122201890054
+      },
+      "other": {
+        "engine": "permit2",
+        "gas": "254189",
+        "pros": 0.00254189,
+        "usd": 0.001285330466669428,
+        "vsIndividualPct": 20.352881457899883
+      },
+      "steps": {
+        "individual": "4 transactions, 4 wallet confirmations",
+        "batch": "4 gasless signatures + 1 transaction"
+      }
+    }
+  }
+}

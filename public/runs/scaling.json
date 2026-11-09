@@ -1,0 +1,51 @@
+{
+  "recordedAt": "2026-11-09T13:56:43.195Z",
+  "network": "Pharos Pacific Mainnet",
+  "from": "0x6ea08ca8f313d860808ef7431fc72c6fbcf4a72d",
+  "token": "USDC",
+  "note": "recipients 0xaaaa…0001 onwards; amounts 1.00, 1.01, …; gas from eth_estimateGas at each plan's block",
+  "points": [
+    {
+      "n": 3,
+      "block": 22569170,
+      "individual": "239358",
+      "permit2": "215222",
+      "eip3009": "306890"
+    },
+    {
+      "n": 5,
+      "block": 22569175,
+      "individual": "398930",
+      "permit2": "293217",
+      "eip3009": "472666"
+    },
+    {
+      "n": 10,
+      "block": 22569185,
+      "individual": "797860",
+      "permit2": "488229",
+      "eip3009": "887191"
+    },
+    {
+      "n": 25,
+      "block": 22569194,
+      "individual": "1994636",
+      "permit2": "1073248",
+      "eip3009": "2131087"
+    },
+    {
+      "n": 50,
+      "block": 22569204,
+      "individual": "3989258",
+      "permit2": "2048468",
+      "eip3009": "4203947"
+    },
+    {
+      "n": 100,
+      "block": 22569218,
+      "individual": "7978516",
+      "permit2": "3999654",
+      "eip3009": "8350036"
+    }
+  ]
+}

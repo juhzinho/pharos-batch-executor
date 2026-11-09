@@ -1,0 +1,24 @@
+{
+  "name": "pharos-batch-executor",
+  "version": "1.0.0",
+  "description": "A SkillEngine skill for Pharos Pacific that runs several independent token transfers as one transaction (Permit2 or EIP-3009 via Multicall3), reports the gas and step saving, and handles partial failure per action.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "batch": "node tasks/batch/batch.js",
+    "web": "node scripts/dev-server.js",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "node test/e2e.js"
+  },
+  "dependencies": {
+    "viem": "^2.57.5"
+  },
+  "optionalDependencies": {
+    "@foundry-rs/anvil-win32-amd64": "1.7.1",
+    "@foundry-rs/anvil-linux-amd64": "1.7.1"
+  }
+}

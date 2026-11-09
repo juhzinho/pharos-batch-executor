@@ -1,0 +1,12 @@
+{
+  "from": "0x6ea08ca8f313d860808ef7431fc72c6fbcf4a72d",
+  "engine": "permit2",
+  "policy": "skip-failed",
+  "actions": [
+    { "to": "0x1111111111111111111111111111111111111111", "amount": "1200", "label": "payroll — Ana" },
+    { "to": "0x2222222222222222222222222222222222222222", "amount": "850.5", "label": "payroll — Bruno" },
+    { "to": "0x3333333333333333333333333333333333333333", "amount": "999999", "label": "typo: one zero too many" },
+    { "to": "0x4444444444444444444444444444444444444444", "amount": "2400", "label": "payroll — Carla" },
+    { "to": "0x5555555555555555555555555555555555555555", "amount": "12.5", "token": "WPROS", "label": "gas top-up — Davi" }
+  ]
+}

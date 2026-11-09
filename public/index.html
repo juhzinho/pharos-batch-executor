@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pharos Batch Executor</title>
+  <meta name="description" content="A SkillEngine skill that turns several independent token transfers on Pharos into one transaction — with the gas measured on chain against sending them one by one, and every failed action named with its reason." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --paper:#f3f1ea; --card:#fffdf8; --ink:#17181c; --muted:#6b6d74; --line:#e3dfd4; --line-2:#cfcabd; --brand:#0033ff; --ok:#1d7a4d; --ok-soft:#e4f2e9; --warn:#a05f00; --warn-soft:#fbefd9; --bad:#c2311f; --bad-soft:#fbe7e3; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace; --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body { margin: 0; font: 15px/1.5 var(--sans); color: var(--ink); background: var(--paper); }
+    a { color: var(--brand); }
+    .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .top { position: sticky; top: 0; z-index: 10; background: var(--paper); display: flex; align-items: center; gap: 16px; padding: 14px 40px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; gap: 10px; align-items: center; color: inherit; text-decoration: none; }
+    .brand b { font-size: 14px; letter-spacing: .12em; font-weight: 800; } .brand em { font-style: normal; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+    .spacer { flex: 1; } .links a { font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; margin-right: 14px; }
+    .lang button { border: 1px solid var(--line-2); background: var(--card); padding: 6px 11px; font: 600 12px var(--sans); cursor: pointer; color: var(--ink); }
+    .lang button:first-child { border-radius: 999px 0 0 999px; } .lang button:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
+    .lang button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+    main { max-width: 1120px; margin: 0 auto; padding: 40px 40px 24px; display: grid; gap: 22px; }
+    .kicker { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); margin: 0 0 10px; }
+    h1 { font-size: clamp(34px, 6vw, 56px); line-height: .95; letter-spacing: -.04em; margin: 0 0 12px; }
+    .lead { color: var(--muted); margin: 0; font-size: 17px; max-width: 62ch; }
+    section.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; min-width: 0; }
+    .panel h2 { font-size: 17px; margin: 0 0 4px; letter-spacing: -.01em; }
+    .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; max-width: 80ch; }
+    .head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .btn { padding: 8px 16px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 600 13px var(--sans); cursor: pointer; white-space: nowrap; }
+    .btn:disabled { opacity: .5; cursor: progress; } .btn.ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line-2); }
+    .muted { color: var(--muted); } .err { color: var(--bad); }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tabs button { border: 1px solid var(--line-2); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: 600 13px var(--sans); cursor: pointer; }
+    .tabs button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .meta { display: flex; gap: 8px 22px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+    .meta b { color: var(--ink); font-weight: 600; }
+    /* the ledger */
+    .ledger { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .ledger th { text-align: left; font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 10px 8px 0; border-bottom: 1px solid var(--line-2); }
+    .ledger td { padding: 10px 10px 10px 0; border-bottom: 1px dashed var(--line); vertical-align: top; }
+    .ledger tr.no td { background: var(--bad-soft); } .ledger tr.no td:first-child { box-shadow: inset 3px 0 var(--bad); }
+    .ledger .r { text-align: right; } .ledger td.r { white-space: nowrap; }
+    .mark { font-weight: 800; width: 34px; padding-left: 10px !important; } .mark.y { color: var(--ok); } .mark.n { color: var(--bad); }
+    .who { font-weight: 600; } .addr { font: 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+    .reason { color: var(--bad); font-size: 12.5px; margin-top: 3px; }
+    .tok { font: 600 11px var(--mono); color: var(--muted); margin-left: 4px; }
+    .left { color: var(--muted); }
+    .outcome { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 14px 16px; border-radius: 12px; background: var(--paper); margin-top: 16px; }
+    .stamp { font: 800 13px var(--sans); letter-spacing: .14em; padding: 6px 12px; border-radius: 8px; border: 2px solid currentColor; transform: rotate(-2deg); }
+    .stamp.ready { color: var(--ok); } .stamp.partial { color: var(--warn); } .stamp.refused, .stamp.blocked { color: var(--bad); }
+    .outcome p { margin: 0; flex: 1; min-width: 240px; font-size: 14px; }
+    .notes { margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; } .notes li { color: var(--warn); margin-top: 4px; } .notes li.b { color: var(--bad); }
+    /* gas */
+    .gasgrid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: start; }
+    .bars { display: grid; gap: 14px; }
+    .bar .lbl { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 5px; } .bar .lbl b { font-weight: 600; }
+    .track { display: flex; height: 30px; border-radius: 6px; overflow: hidden; background: var(--paper); }
+    .seg { height: 100%; display: flex; align-items: center; justify-content: center; font: 600 10.5px var(--mono); color: #fff; min-width: 0; overflow: hidden; white-space: nowrap; border-right: 2px solid var(--card); }
+    .seg.one { background: #8a8d96; } .seg.bat { background: var(--brand); } .seg.app { background: repeating-linear-gradient(-45deg, #9db0ff 0 6px, #c7d2ff 6px 12px); color: #1a2a80; }
+    .bar .foot { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .verdictline { font-size: 15px; font-weight: 600; margin: 4px 0 0; } .verdictline.good { color: var(--ok); } .verdictline.cost { color: var(--warn); }
+    .facts { display: grid; gap: 10px; }
+    .fact { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    .fact .k { font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .fact .v { font: 600 20px var(--mono); letter-spacing: -.02em; margin-top: 2px; } .fact .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    /* signing */
+    .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .kv { width: 100%; border-collapse: collapse; font-size: 12.5px; } .kv td { padding: 5px 10px 5px 0; border-top: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; } .kv tr:first-child td { border-top: 0; } .kv td:first-child { color: var(--muted); white-space: nowrap; width: 1%; }
+    .step { font: 700 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--brand); margin: 0 0 6px; }
+    details summary { cursor: pointer; color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+    .code { background: #15161b; color: #e6e8ef; border-radius: 8px; padding: 10px 12px; font: 11.5px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px; max-height: 320px; overflow: auto; }
+    /* editor */
+    .editor { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+    .editor label { display: block; font: 600 12px var(--sans); color: var(--muted); margin-bottom: 4px; }
+    .editor input, .editor select, .editor textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--paper); color: var(--ink); font: 12.5px var(--mono); }
+    .editor textarea { min-height: 170px; resize: vertical; line-height: 1.5; }
+    .editor .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .editor .hint { font-size: 12.5px; color: var(--muted); }
+    /* fork proof */
+    .scen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+    .card h3 { margin: 0; font-size: 14.5px; } .card .tag { font: 700 11px var(--mono); color: var(--brand); }
+    .card .what { font-size: 12.5px; color: var(--muted); margin: 0; }
+    .card ul { list-style: none; padding: 0; margin: 0; font-size: 12.5px; } .card li { padding: 4px 0; border-top: 1px dashed var(--line); } .card li:first-child { border-top: 0; }
+    .card li .y { color: var(--ok); font-weight: 700; } .card li .n { color: var(--bad); font-weight: 700; } .card li small { display: block; color: var(--bad); }
+    .card .res { font-size: 13px; font-weight: 600; } .card .hash { font: 11px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+    .scale { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 22px; }
+    .spt { display: grid; grid-template-columns: minmax(64px, auto) 1fr; gap: 10px; align-items: start; border-top: 1px dashed var(--line); padding-top: 10px; min-width: 0; }
+    .sn { font-size: 22px; font-weight: 600; line-height: 1; } .sn small { display: block; font: 500 10.5px var(--sans); color: var(--muted); margin-top: 3px; }
+    .srow { display: grid; grid-template-columns: 74px 1fr 52px; gap: 8px; align-items: center; font-size: 12px; margin-bottom: 3px; } .srow .num { text-align: right; }
+    .strack { height: 9px; background: var(--paper); border-radius: 3px; overflow: hidden; } .strack i { display: block; height: 100%; border-radius: 3px; }
+    .strack i.one { background: #8a8d96; } .strack i.bat { background: var(--brand); } .strack i.e3 { background: #e0a43b; }
+    .sper { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .how { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .how div { font-size: 13px; } .how b { display: block; margin-bottom: 4px; font-size: 13.5px; } .how span { color: var(--muted); }
+    footer { color: var(--muted); font-size: 12.5px; max-width: 1120px; margin: 0 auto; padding: 4px 40px 44px; } footer a { color: var(--muted); }
+    [hidden] { display: none !important; }
+    @media (max-width: 960px) { .gasgrid, .sign, .editor { grid-template-columns: 1fr; } .scale { grid-template-columns: 1fr 1fr; } .scen { grid-template-columns: 1fr; } .how { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 680px) {
+      .top { padding: 12px 16px; } main { padding: 26px 16px 16px; } footer { padding: 4px 16px 32px; } .brand em, .links { display: none; }
+      section.panel { padding: 16px; } .how, .scale { grid-template-columns: 1fr; } .editor .row { grid-template-columns: 1fr; }
+      .ledger .hide-s { display: none; } .ledger td, .ledger th { padding-right: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#"><svg width="22" height="22" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="#0033ff"/><path d="M9 10h16v3H9zM9 15.5h16v3H9zM9 21h10v3H9z" fill="#fff"/></svg><span><b>PHAROS</b> <em>BATCH EXECUTOR</em></span></a>
+    <span class="spacer"></span>
+    <nav class="links"><a href="https://github.com/juhzinho/pharos-batch-executor" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/juhzinho/pharos-batch-executor/blob/main/skill/pharos-batch-executor/SKILL.md" target="_blank" rel="noopener">SKILL.md</a></nav>
+    <div class="lang"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div>
+  </header>
+
+  <main>
+    <section>
+      <p class="kicker">SkillEngine · Medium · Pharos Pacific</p>
+      <h1>Batch Executor</h1>
+      <p class="lead" data-i="lead"></p>
+    </section>
+
+    <section class="panel">
+      <div class="tabs" id="tabs"></div>
+      <div id="editorBox" hidden>
+        <p class="sub" data-i="editorSub"></p>
+        <form class="editor" id="editor">
+          <div>
+            <label for="csv" data-i="csvLabel"></label>
+            <textarea id="csv" spellcheck="false"></textarea>
+          </div>
+          <div>
+            <label for="from" data-i="fromLabel"></label>
+            <input id="from" spellcheck="false" autocomplete="off" />
+            <div class="row">
+              <div><label for="engine" data-i="engineLabel"></label><select id="engine"><option value="permit2">permit2</option><option value="eip3009">eip3009</option></select></div>
+              <div><label for="policy" data-i="policyLabel"></label><select id="policy"><option value="skip-failed">skip-failed</option><option value="all-or-nothing">all-or-nothing</option></select></div>
+              <div><label for="approve" data-i="approveLabel"></label><select id="approve"><option value="standing">standing</option><option value="exact">exact</option></select></div>
+            </div>
+            <p class="hint" data-i="editorHint"></p>
+            <button class="btn" id="planBtn" type="submit" data-i="planBtn"></button>
+          </div>
+        </form>
+      </div>
+      <div class="head" id="planHead"><div class="meta" id="meta" style="margin:0"></div><span class="spacer"></span><button class="btn ghost" id="liveBtn" data-i="liveBtn"></button></div>
+      <p class="muted" id="msg" style="font-size:13px;margin:8px 0 0"></p>
+      <div id="planView" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel" id="gasPanel">
+      <h2 data-i="gasTitle"></h2>
+      <p class="sub" data-i="gasSub"></p>
+      <div id="gas"></div>
+    </section>
+
+    <section class="panel">
+      <h2 data-i="scaleTitle"></h2>
+      <p class="sub" id="scaleSub"></p>
+      <div id="scale"></div>
+    </section>
+
+    <section class="panel" id="signPanel">
+      <h2 data-i="signTitle"></h2>
+      <p class="sub" data-i="signSub"></p>
+      <div id="sign"></div>
+    </section>
+
+    <section class="panel">
+      <h2 data-i="forkTitle"></h2>
+      <p class="sub" id="forkSub"></p>
+      <div class="scen" id="fork"></div>
+    </section>
+
+    <section class="panel">
+      <h2 data-i="howTitle"></h2>
+      <div class="how" id="how" style="margin-top:12px"></div>
+    </section>
+  </main>
+  <footer id="footer"></footer>
+
+  <script type="module">
+    const T = {
+      en: {
+        lead: "Several independent token transfers become one transaction on Pharos. Before anything is signed it checks each one against the wallet, measures the gas both ways on chain, and if something breaks it says which action, why, and what happened to the rest.",
+        tabs: { payroll: "Payroll · Permit2", aon: "Same, all-or-nothing", vendors: "Vendors · EIP-3009", mine: "Your batch" },
+        liveBtn: "Re-plan live on Pacific", running: "Checking each action and measuring gas at the head block… (~10–30 s)",
+        recorded: "recorded", live: "live", block: "block", wallet: "wallet", engine: "engine", policy: "policy",
+        cols: ["#", "Recipient", "Amount", "Left after"], skipped: "not in the batch",
+        stamp: { ready: "READY", partial: "PARTIAL", refused: "REFUSED", blocked: "BLOCKED" },
+        editorSub: "Paste a CSV and any Pacific wallet. The plan is real and read-only: nothing is signed or sent, so you can use any address — the checks run against that wallet's actual balances.",
+        csvLabel: "Actions (CSV: to,amount[,token][,label])", fromLabel: "Paying wallet", engineLabel: "Engine", policyLabel: "If an action fails", approveLabel: "Permit2 approval",
+        editorHint: "At least 3 actions, up to 100. Tokens: USDC, WPROS (WPROS only with permit2).", planBtn: "Plan this batch",
+        gasTitle: "Gas, measured on chain both ways", gasSub: "One by one = each transfer estimated as its own transaction from this wallet. As a batch = the single transaction, estimated with an equivalent test signer because the wallet has not signed yet. Same block, same base fee.",
+        oneByOne: "One by one", asBatch: "As a batch", approval: "approval",
+        txs: (n) => `${n} transaction${n > 1 ? "s" : ""}`,
+        saves: (g, p) => `The batch uses ${g} less gas (${p}%).`, costs: (g, p) => `The batch uses ${g} more gas (${p}%): with EIP-3009 each transfer carries a signature check, so the gain here is in steps and failure isolation, not gas.`,
+        firstStanding: (g, p, n) => `This first time, with the one-time approval: ${g} gas, ${p}. From then on only the blue bar${n ? `; ahead overall from batch ${n}` : ""}.`,
+        firstExact: (g, p) => `With an exact approval every batch needs its own: ${g} gas each time, ${p}.`,
+        more: (p) => `${p}% more than one by one`, less: (p) => `${p}% less than one by one`,
+        stepsK: "Wallet steps", feeK: "Batch fee at this block", otherK: (e) => `With ${e} instead`,
+        fee: (b, p) => `base fee ${b} gwei · PROS $${p}`, other: (p) => (p >= 0 ? `${p.toFixed(1)}% less than one by one` : `${(-p).toFixed(1)}% more than one by one`),
+        noGas: "No gas comparison: no batch is built for this plan.",
+        signTitle: "What the wallet signs", signSub: "The skill never holds a key. It hands the wallet typed EIP-712 data to sign and builds the transaction from the signature, then simulates it action by action before anything is sent.",
+        nothingToSign: "Nothing to sign — the policy refused this batch.",
+        p2: { s1: "First, once per token", s2: "Then one signature", s3: "Then one transaction", s3v: (n) => `Permit2.permitTransferFrom(batch) — ${n} transfers, any revert reverts all of them.` },
+        e3: { s1: "One gasless signature per transfer", s2: "Then one transaction", s2v: (n, af) => `Multicall3.aggregate3 — ${n} USDC.transferWithAuthorization calls, ${af ? "allowFailure: each fails on its own" : "allowFailure off: one failure reverts all"}.` },
+        spender: "spender", deadline: "deadline", nonce: "nonce", transfers: "transfers", none: "none needed",
+        typed: "EIP-712 typed data (eth_signTypedData_v4)",
+        scaleTitle: "The bigger the batch, the bigger the saving", scaleSub: (a, b) => `The same kind of USDC payroll planned with 3 to 100 transfers, gas estimated on Pacific mainnet (blocks ${a}–${b}). Bars are relative to sending them one by one.`,
+        transfersShort: "transfers", perTransfer: (a, b) => `per transfer: ${a} one by one → ${b} with permit2`,
+        forkTitle: "The full loop, sent for real on a fork", forkSub: (b) => `An Anvil fork of Pacific mainnet at block ${b}, with fresh test wallets funded on the fork only. Each scenario signs, sends and verifies the receipt against the Transfer events.`,
+        scen: {
+          A: ["Five payments, one transaction", "Permit2, 4 USDC + 1 WPROS. The same five transfers were also sent one by one, to compare real receipts."],
+          B: ["Two break after signing", "EIP-3009 + Multicall3, skip-failed. After the wallet signed: authorization #2 was cancelled and the balance was spent so #5 no longer fits."],
+          C: ["Atomic batch, one bad action", "Permit2 is all-or-nothing. The balance drops after signing; the simulation catches it, the batch is sent anyway to show the revert, then the agent re-plans."],
+        },
+        happened: "happened", notHappened: "did not happen", gasUsed: "gas used", vsOne: (a, b, p) => `Receipts: batch ${a} gas vs ${b} one by one — ${p}% less`, est: (e, r) => `The plan had estimated ${e} for the batch; the receipt used ${r}.`,
+        reverted: "Sent anyway → reverted", replanned: "Re-planned → clean batch", forkTx: "fork transaction (not on the public explorer)",
+        howTitle: "How it works",
+        how: [["1 · Check each action", "Balance left after the actions before it, USDC blacklist, a simulated transfer. A wallet with code or an EIP-7702 delegation is refused (signatures would go through EIP-1271)."], ["2 · Apply the policy", "skip-failed builds the batch without the actions that would fail; all-or-nothing refuses the whole batch. Either way the report names each action and the reason."], ["3 · Sign once, send once", "Permit2: one signature for all transfers, atomic. EIP-3009: one gasless signature per transfer, batched by Multicall3 with per-action failure."], ["4 · Verify the receipt", "Every planned action is matched to a Transfer event. What did not happen is re-run at the parent block to say why; unplanned transfers are flagged."]],
+        footer: (r) => `Recorded on Pharos Pacific Mainnet ${r}. Nothing on this page signs or sends a transaction.`,
+        errNet: "Could not reach the planner. Try again in a minute.",
+        sum: { ready: (n) => `All ${n} actions fit in one transaction.`, partial: (k, n, ids) => `${k} of ${n} actions go into the batch; left out: ${ids} (the reason is on each row).`, refused: (ids) => `All-or-nothing: ${ids} would fail, so no batch is built — nothing to sign, nothing moves.`, none: "No action can go through.", blocked: "Blocked before any action:" },
+        ids: (a) => a.map((i) => "#" + i).join(", "),
+        stepsInd: (n) => `${n} transactions, ${n} wallet confirmations`,
+        stepsBat: (sig, n, app, standing) => `${sig === "permit2" ? "1 signature" : `${n} gasless signatures`} + 1 transaction${app ? ` (+ ${app} ${standing ? "one-time " : ""}approval${app > 1 ? "s" : ""})` : ""}`,
+        approveLbl: (sym, standing, amt) => (standing ? `Approve ${sym} for Permit2 — standing allowance, once` : `Approve ${amt} ${sym} for Permit2 — this batch only`),
+        vsum: (ok, n, status) => (status !== "success" ? `Transaction reverted: none of the ${n} transfers happened.` : ok === n ? `All ${n} transfers happened, as planned.` : `${ok} of ${n} transfers happened; ${n - ok} did not — the others were not affected.`),
+      },
+      pt: {
+        lead: "Várias transferências independentes viram uma única transação na Pharos. Antes de qualquer assinatura, ele confere cada uma contra a carteira, mede o gás dos dois jeitos na própria rede e, se algo quebra, diz qual ação, por quê e o que aconteceu com as outras.",
+        tabs: { payroll: "Folha · Permit2", aon: "A mesma, tudo-ou-nada", vendors: "Fornecedores · EIP-3009", mine: "Seu lote" },
+        liveBtn: "Replanejar ao vivo na Pacific", running: "Conferindo cada ação e medindo o gás no bloco atual… (~10–30 s)",
+        recorded: "gravado", live: "ao vivo", block: "bloco", wallet: "carteira", engine: "motor", policy: "política",
+        cols: ["#", "Destinatário", "Valor", "Sobra depois"], skipped: "fora do lote",
+        stamp: { ready: "PRONTO", partial: "PARCIAL", refused: "RECUSADO", blocked: "BLOQUEADO" },
+        editorSub: "Cole um CSV e qualquer carteira da Pacific. O plano é real e só de leitura: nada é assinado nem enviado, então dá para usar qualquer endereço — as checagens rodam contra os saldos reais daquela carteira.",
+        csvLabel: "Ações (CSV: to,amount[,token][,label])", fromLabel: "Carteira pagadora", engineLabel: "Motor", policyLabel: "Se uma ação falhar", approveLabel: "Approve do Permit2",
+        editorHint: "No mínimo 3 ações, até 100. Tokens: USDC, WPROS (WPROS só com permit2).", planBtn: "Planejar este lote",
+        gasTitle: "Gás, medido na rede dos dois jeitos", gasSub: "Uma por uma = cada transferência estimada como transação própria desta carteira. Em lote = a transação única, estimada com um assinante de teste equivalente, porque a carteira ainda não assinou. Mesmo bloco, mesma base fee.",
+        oneByOne: "Uma por uma", asBatch: "Em lote", approval: "approve",
+        txs: (n) => `${n} transaç${n > 1 ? "ões" : "ão"}`,
+        saves: (g, p) => `O lote gasta ${g} a menos de gás (${p}%).`, costs: (g, p) => `O lote gasta ${g} a mais de gás (${p}%): no EIP-3009 cada transferência verifica uma assinatura, então o ganho aqui está nos passos e no isolamento de falhas, não no gás.`,
+        firstStanding: (g, p, n) => `Nesta primeira vez, com o approve único: ${g} de gás, ${p}. Daí em diante só a barra azul${n ? `; no total, sai na frente a partir do ${n}º lote` : ""}.`,
+        firstExact: (g, p) => `Com approve exato, cada lote precisa do seu: ${g} de gás toda vez, ${p}.`,
+        more: (p) => `${p}% a mais que uma por uma`, less: (p) => `${p}% a menos que uma por uma`,
+        stepsK: "Passos na carteira", feeK: "Taxa do lote neste bloco", otherK: (e) => `Com ${e} no lugar`,
+        fee: (b, p) => `base fee ${b} gwei · PROS US$ ${p}`, other: (p) => (p >= 0 ? `${p.toFixed(1).replace(".", ",")}% a menos que uma por uma` : `${(-p).toFixed(1).replace(".", ",")}% a mais que uma por uma`),
+        noGas: "Sem comparação de gás: nenhum lote é montado neste plano.",
+        signTitle: "O que a carteira assina", signSub: "A skill nunca guarda chave. Ela entrega à carteira os dados EIP-712 para assinar, monta a transação a partir da assinatura e simula ação por ação antes de qualquer envio.",
+        nothingToSign: "Nada para assinar — a política recusou este lote.",
+        p2: { s1: "Primeiro, uma vez por token", s2: "Depois, uma assinatura", s3: "Depois, uma transação", s3v: (n) => `Permit2.permitTransferFrom(batch) — ${n} transferências; se uma reverte, todas revertem.` },
+        e3: { s1: "Uma assinatura sem gás por transferência", s2: "Depois, uma transação", s2v: (n, af) => `Multicall3.aggregate3 — ${n} chamadas USDC.transferWithAuthorization, ${af ? "allowFailure: cada uma falha sozinha" : "allowFailure desligado: uma falha reverte todas"}.` },
+        spender: "spender", deadline: "prazo", nonce: "nonce", transfers: "transferências", none: "nenhum necessário",
+        typed: "Dados tipados EIP-712 (eth_signTypedData_v4)",
+        scaleTitle: "Quanto maior o lote, maior a economia", scaleSub: (a, b) => `O mesmo tipo de folha em USDC planejada com 3 a 100 transferências, gás estimado na mainnet Pacific (blocos ${a}–${b}). As barras são relativas a enviar uma por uma.`,
+        transfersShort: "transferências", perTransfer: (a, b) => `por transferência: ${a} uma por uma → ${b} com permit2`,
+        forkTitle: "O ciclo completo, enviado de verdade num fork", forkSub: (b) => `Um fork Anvil da mainnet Pacific no bloco ${b}, com carteiras de teste novas abastecidas só no fork. Cada cenário assina, envia e confere o recibo contra os eventos Transfer.`,
+        scen: {
+          A: ["Cinco pagamentos, uma transação", "Permit2, 4 USDC + 1 WPROS. As mesmas cinco transferências também foram enviadas uma por uma, para comparar recibos reais."],
+          B: ["Duas quebram depois da assinatura", "EIP-3009 + Multicall3, skip-failed. Depois que a carteira assinou: a autorização nº 2 foi cancelada e o saldo foi gasto, então a nº 5 não cabe mais."],
+          C: ["Lote atômico, uma ação ruim", "O Permit2 é tudo-ou-nada. O saldo cai depois da assinatura; a simulação pega, o lote é enviado mesmo assim para mostrar o revert, e o agente replaneja."],
+        },
+        happened: "aconteceu", notHappened: "não aconteceu", gasUsed: "gás usado", vsOne: (a, b, p) => `Recibos: lote ${a} de gás contra ${b} uma por uma — ${p}% a menos`, est: (e, r) => `O plano tinha estimado ${e} para o lote; o recibo usou ${r}.`,
+        reverted: "Enviado mesmo assim → reverteu", replanned: "Replanejado → lote limpo", forkTx: "transação do fork (não está no explorer público)",
+        howTitle: "Como funciona",
+        how: [["1 · Confere cada ação", "Saldo que sobra depois das ações anteriores, blacklist do USDC, transferência simulada. Carteira com código ou delegação EIP-7702 é recusada (a assinatura passaria pelo EIP-1271)."], ["2 · Aplica a política", "skip-failed monta o lote sem as ações que falhariam; all-or-nothing recusa o lote inteiro. Nos dois casos o relatório nomeia cada ação e o motivo."], ["3 · Assina uma vez, envia uma vez", "Permit2: uma assinatura para todas as transferências, atômico. EIP-3009: uma assinatura sem gás por transferência, agrupadas pelo Multicall3 com falha por ação."], ["4 · Confere o recibo", "Cada ação planejada é casada com um evento Transfer. O que não aconteceu é refeito no bloco pai para dizer o porquê; transferências fora do plano são apontadas."]],
+        footer: (r) => `Gravado na Pharos Pacific Mainnet em ${r}. Nada nesta página assina ou envia transação.`,
+        errNet: "Não consegui falar com o planejador. Tente de novo em um minuto.",
+        sum: { ready: (n) => `As ${n} ações cabem numa transação só.`, partial: (k, n, ids) => `${k} de ${n} ações entram no lote; ficam de fora: ${ids} (o motivo está em cada linha).`, refused: (ids) => `Tudo-ou-nada: ${ids} falharia, então nenhum lote é montado — nada para assinar, nada se move.`, none: "Nenhuma ação consegue passar.", blocked: "Bloqueado antes de qualquer ação:" },
+        ids: (a) => a.map((i) => "nº " + i).join(", "),
+        stepsInd: (n) => `${n} transações, ${n} confirmações na carteira`,
+        stepsBat: (sig, n, app, standing) => `${sig === "permit2" ? "1 assinatura" : `${n} assinaturas sem gás`} + 1 transação${app ? ` (+ ${app} approve${app > 1 ? "s" : ""}${standing ? ` único${app > 1 ? "s" : ""}` : ""})` : ""}`,
+        approveLbl: (sym, standing, amt) => (standing ? `Approve de ${sym} para o Permit2 — allowance permanente, uma vez` : `Approve de ${amt} ${sym} para o Permit2 — só este lote`),
+        vsum: (ok, n, status) => (status !== "success" ? `A transação reverteu: nenhuma das ${n} transferências aconteceu.` : ok === n ? `As ${n} transferências aconteceram, como planejado.` : `${ok} de ${n} transferências aconteceram; ${n - ok} não — as outras não foram afetadas.`),
+      },
+    };
+
+    const EXPLORER = "https://www.pharosscan.xyz";
+    const RUNS = { payroll: "runs/plan-permit2.json", aon: "runs/plan-all-or-nothing.json", vendors: "runs/plan-eip3009.json" };
+    const LIVE = { payroll: "example=payroll", aon: "example=payroll&policy=all-or-nothing", vendors: "example=vendors" };
+    const DEFAULT_CSV = "to,amount,token,label\n0x6666666666666666666666666666666666666666,1000,USDC,invoice 1042\n0x7777777777777777777777777777777777777777,1500,USDC,invoice 1043\n0x8888888888888888888888888888888888888888,800.25,USDC,invoice 1044\n0x9999999999999999999999999999999999999999,5,WPROS,gas top-up";
+    let lang = "en", tab = "payroll", view = null, mineView = null, fork = null, scaling = null;
+    const recorded = {};
+    try { const l = localStorage.getItem("batch-lang"); if (l === "pt" || l === "en") lang = l; else if ((navigator.language || "").startsWith("pt")) lang = "pt"; } catch {}
+    const t = () => T[lang];
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const loc = () => (lang === "pt" ? "pt-BR" : "en-US");
+    const n0 = (v) => Number(v).toLocaleString(loc());
+    const pct = (v) => Math.abs(v).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    function units(raw, dec) {
+      const v = BigInt(raw), neg = v < 0n, a = neg ? -v : v, base = 10n ** BigInt(dec);
+      const whole = (a / base).toLocaleString(loc());
+      let frac = (a % base).toString().padStart(dec, "0").replace(/0+$/, "");
+      if (frac.length > 6) frac = frac.slice(0, 6);
+      return (neg ? "−" : "") + whole + (frac ? (lang === "pt" ? "," : ".") + frac : "");
+    }
+    const short = (a) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+    const when = (iso) => new Date(iso).toLocaleString(loc(), { dateStyle: "medium", timeStyle: "short" });
+    function summaryOf(p) {
+      const bad = p.actions.filter((a) => !a.ok).map((a) => a.index);
+      if (p.outcome === "blocked") return `${t().sum.blocked} ${tr(p.blockers[0])}`;
+      if (p.outcome === "refused") return bad.length && p.policy === "all-or-nothing" ? t().sum.refused(t().ids(bad)) : t().sum.none;
+      if (p.outcome === "partial") return t().sum.partial(p.batchActions.length, p.actions.length, t().ids(bad));
+      return t().sum.ready(p.actions.length);
+    }
+    const stepsOf = (p) => ({ ind: t().stepsInd(p.batchActions.length), bat: t().stepsBat(p.sign.kind, p.batchActions.length, p.approvals?.length ?? 0, p.gas.approval?.mode !== "exact") });
+    // The agent writes its reasons in English; in PT they are translated here. Reasons that come from a contract
+    // (e.g. "FiatTokenV2: authorization is used or canceled") are quoted as they are.
+    const ptNum = (s) => s.replace(/,/g, "§").replace(/\./g, ",").replace(/§/g, ".");
+    const PT_RULES = [
+      [/^insufficient (\w+): (\S+) left after the actions before it, (\S+) needed$/, (m) => `${m[1]} insuficiente: sobram ${ptNum(m[2])} depois das ações anteriores, ${ptNum(m[3])} necessários`],
+      [/^the recipient is blacklisted by USDC$/, () => "o destinatário está na blacklist do USDC"],
+      [/^the paying wallet is blacklisted by USDC$/, () => "a carteira pagadora está na blacklist do USDC"],
+      [/^(\w+) refuses the transfer: (.*)$/, (m) => `o ${m[1]} recusa a transferência: ${m[2]}`],
+      [/^the whole transaction reverted: (.*)$/, (m) => `a transação inteira reverteu: ${m[1]}`],
+      [/^the whole batch reverts$/, () => "o lote inteiro reverte"],
+      [/^no matching Transfer in the receipt$/, () => "nenhum Transfer correspondente no recibo"],
+      [/^the wallet has an EIP-7702 delegation/, () => "a carteira tem uma delegação EIP-7702: o USDC e o Permit2 verificam a assinatura pelo contrato delegado (EIP-1271), não pela chave — uma assinatura comum seria rejeitada"],
+      [/^the paying address is a contract/, () => "o endereço pagador é um contrato: as assinaturas são verificadas por EIP-1271"],
+      [/^actions (\d+) and (\d+) are identical/, (m) => `as ações ${m[1]} e ${m[2]} são idênticas (mesmo destinatário, token e valor) — confira se não é pagamento em dobro`],
+      [/^the wallet holds (\S+) PROS; sending (the approvals and )?the batch needs up to (\S+) PROS for gas( — .*)?$/, (m) => `a carteira tem ${ptNum(m[1])} PROS; enviar ${m[2] ? "os approves e " : ""}o lote pede até ${ptNum(m[3])} PROS de gás${m[4] ? " — no EIP-3009 qualquer conta com saldo pode enviar o lote: as assinaturas sozinhas autorizam as transferências" : ""}`],
+    ];
+    function tr(s) {
+      if (lang !== "pt" || !s) return s;
+      for (const [re, f] of PT_RULES) { const m = re.exec(s); if (m) return f(m); }
+      return s;
+    }
+    const vsumOf = (v) => t().vsum(v.actions.filter((a) => a.executed).length, v.actions.length, v.status);
+    const tokenOf = (sym, batch) => batch.actions.find((a) => a.token === sym)?.tokenAddress;
+
+    function renderTabs() {
+      $("tabs").innerHTML = Object.entries(t().tabs).map(([k, v]) => `<button data-tab="${k}" class="${k === tab ? "on" : ""}">${esc(v)}</button>`).join("");
+      $("tabs").querySelectorAll("button").forEach((b) => (b.onclick = () => selectTab(b.dataset.tab)));
+    }
+    async function selectTab(k) {
+      tab = k;
+      renderTabs();
+      $("editorBox").hidden = k !== "mine";
+      $("liveBtn").hidden = k === "mine";
+      $("msg").textContent = "";
+      if (k === "mine") { view = mineView; return renderAll(); }
+      if (!recorded[k]) {
+        try { recorded[k] = await (await fetch(RUNS[k])).json(); } catch { $("msg").textContent = t().errNet; return; }
+      }
+      view = { ...recorded[k], source: "recorded" };
+      renderAll();
+    }
+
+    async function plan(url, init) {
+      const btns = [$("liveBtn"), $("planBtn")];
+      btns.forEach((b) => (b.disabled = true));
+      $("msg").className = "muted"; $("msg").textContent = t().running;
+      try {
+        const r = await fetch(url, init);
+        const j = await r.json().catch(() => ({ ok: false, error: t().errNet }));
+        if (!j.ok) throw new Error(j.error);
+        return { ...j, recordedAt: new Date().toISOString(), source: "live" };
+      } catch (e) {
+        $("msg").className = "err"; $("msg").textContent = e.message && e.message !== "Failed to fetch" ? e.message : t().errNet;
+        return null;
+      } finally { btns.forEach((b) => (b.disabled = false)); }
+    }
+    $("liveBtn").onclick = async () => {
+      const k = tab;
+      const j = await plan(`/api/plan?${LIVE[k]}`);
+      if (j && tab === k) { view = j; $("msg").textContent = ""; renderAll(); }
+    };
+    $("editor").onsubmit = async (e) => {
+      e.preventDefault();
+      const body = { from: $("from").value.trim(), engine: $("engine").value, policy: $("policy").value, approve: $("approve").value, csv: $("csv").value };
+      const j = await plan("/api/plan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (tab !== "mine") return;
+      view = mineView = j ? { ...j, mine: true } : null; // an error must not leave the previous plan on screen
+      if (j) $("msg").textContent = "";
+      renderAll();
+    };
+
+    function renderPlan() {
+      const v = view;
+      if (!v) { $("meta").innerHTML = ""; $("planView").innerHTML = ""; return; }
+      const p = v.plan, b = v.batch;
+      $("meta").innerHTML = [
+        `<span>${t().block} <b class="num">${n0(p.block.number)}</b> · ${esc(when(v.recordedAt))} · <b>${v.source === "live" ? t().live : t().recorded}</b></span>`,
+        `<span>${t().wallet} <a class="num" href="${EXPLORER}/address/${p.from}" target="_blank" rel="noopener">${short(p.from)}</a></span>`,
+        `<span>${t().engine} <b class="num">${p.engine}</b></span>`, `<span>${t().policy} <b class="num">${p.policy}</b></span>`,
+      ].join("");
+      // what is left of each token after each action that goes through (failed ones move nothing)
+      const moves = p.outcome === "ready" || p.outcome === "partial";
+      const left = Object.fromEntries(Object.entries(p.wallet.balance).map(([k, x]) => [k, BigInt(x)]));
+      const rows = p.actions.map((a) => {
+        const addr = tokenOf(a.token, b);
+        if (a.ok && left[addr] != null) left[addr] -= BigInt(a.amount);
+        const lf = left[addr] != null ? `${units(left[addr], a.decimals)}<span class="tok">${a.token}</span>` : "";
+        return `<tr class="${a.ok ? "" : "no"}"><td class="mark ${a.ok ? "y" : "n"}">${a.ok ? "✓" : "✗"}</td><td class="num">${a.index}</td>
+          <td><div class="who">${esc(a.label || short(a.to))}</div><div class="addr">${a.to}</div>${a.ok ? "" : `<div class="reason">${esc(tr(a.reason))}</div>`}</td>
+          <td class="r num">${units(a.amount, a.decimals)}<span class="tok">${a.token}</span></td>
+          <td class="r num left hide-s">${moves ? (a.ok ? lf : `<span class="muted">${t().skipped}</span>`) : `<span class="muted">—</span>`}</td></tr>`;
+      }).join("");
+      const notes = [...(p.warnings ?? []).map((w) => `<li>! ${esc(tr(w))}</li>`), ...(p.outcome === "blocked" ? [] : p.blockers ?? []).map((w) => `<li class="b">✗ ${esc(tr(w))}</li>`)].join(""); // a blocked plan already says why in its summary
+      $("planView").innerHTML = `<div style="overflow-x:auto"><table class="ledger"><thead><tr><th></th><th>${t().cols[0]}</th><th>${t().cols[1]}</th><th class="r">${t().cols[2]}</th><th class="r hide-s">${t().cols[3]}</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="outcome"><span class="stamp ${p.outcome}">${t().stamp[p.outcome]}</span><p>${esc(summaryOf(p))}</p></div>${notes ? `<ul class="notes">${notes}</ul>` : ""}`;
+    }
+
+    function renderGas() {
+      const g = view?.plan?.gas;
+      if (!g) { $("gas").innerHTML = `<p class="muted" style="margin:0">${view ? t().noGas : ""}</p>`; return; }
+      const ind = Number(g.individual.gas), bat = Number(g.batch.gas), app = g.approval ? Number(g.approval.gas) : 0;
+      const max = Math.max(ind, bat + app);
+      const w = (x) => `${(x / max) * 100}%`;
+      const segs = g.individual.perAction.map((x, i) => `<div class="seg one" style="width:${w(Number(x))}" title="${n0(x)} gas">#${view.plan.batchActions[i]}</div>`).join("");
+      const saving = g.saving.pct;
+      const st = stepsOf(view.plan);
+      const first = g.approval ? g.approval.firstBatchVsIndividualPct : null;
+      const firstTxt = first == null ? "" : (first >= 0 ? t().less(pct(first)) : t().more(pct(first)));
+      $("gas").innerHTML = `<div class="gasgrid"><div class="bars">
+          <div class="bar"><div class="lbl"><b>${t().oneByOne}</b><span class="num">${n0(ind)} gas</span></div><div class="track">${segs}</div><div class="foot">${esc(st.ind)} · ${g.individual.pros.toLocaleString(loc(), { maximumFractionDigits: 6 })} PROS</div></div>
+          <div class="bar"><div class="lbl"><b>${t().asBatch}</b><span class="num">${n0(bat)}${app ? ` + ${n0(app)}` : ""} gas</span></div><div class="track"><div class="seg bat" style="width:${w(bat)}">${t().txs(1)}</div>${app ? `<div class="seg app" style="width:${w(app)}" title="${esc(g.approval.note)}">${t().approval}</div>` : ""}</div><div class="foot">${esc(st.bat)} · ${g.batch.pros.toLocaleString(loc(), { maximumFractionDigits: 6 })} PROS</div></div>
+          <p class="verdictline ${saving >= 0 ? "good" : "cost"}">${saving >= 0 ? t().saves(n0(g.saving.gas), pct(saving)) : t().costs(n0(-Number(g.saving.gas)), pct(saving))}</p>
+          ${g.approval ? `<p class="muted" style="margin:0;font-size:13px">${g.approval.mode === "exact" ? t().firstExact(n0(g.approval.firstBatchTotal), firstTxt) : t().firstStanding(n0(g.approval.firstBatchTotal), firstTxt, g.approval.breakEvenBatch)}</p>` : ""}
+        </div><div class="facts">
+          <div class="fact"><div class="k">${t().stepsK}</div><div class="v">${g.individual.transactions} → 1</div><div class="s">${esc(st.bat)}</div></div>
+          ${g.other ? `<div class="fact"><div class="k">${t().otherK(g.other.engine)}</div><div class="v">${n0(g.other.gas)} gas</div><div class="s">${t().other(g.other.vsIndividualPct)}</div></div>` : ""}
+          <div class="fact"><div class="k">${t().feeK}</div><div class="v">${lang === "pt" ? "US$ " : "$"}${g.batch.usd.toLocaleString(loc(), { minimumFractionDigits: 5, maximumFractionDigits: 5 })}</div><div class="s">${t().fee(g.baseFeeGwei.toLocaleString(loc()), g.prosUsd.toLocaleString(loc(), { minimumFractionDigits: 4, maximumFractionDigits: 4 }))}</div></div>
+        </div></div>`;
+    }
+
+    function renderSign() {
+      const p = view?.plan, b = view?.batch;
+      if (!p) { $("sign").innerHTML = ""; return; }
+      if (!p.sign) { $("sign").innerHTML = `<p class="muted" style="margin:0">${t().nothingToSign}</p>`; return; }
+      const typed = p.sign.typedData;
+      const dl = new Date(p.deadline * 1000).toLocaleString(loc(), { dateStyle: "medium", timeStyle: "short" });
+      const raw = `<details><summary>${t().typed}</summary><div class="code">${esc(JSON.stringify(typed, null, 2))}</div></details>`;
+      if (p.sign.kind === "permit2") {
+        const m = typed.message;
+        const app = p.approvals?.length ? p.approvals.map((a) => { const one = b.actions.find((y) => y.tokenAddress.toLowerCase() === a.tx.to.toLowerCase()); const total = p.actions.filter((x) => x.ok && x.token === one?.token).reduce((sum, x) => sum + BigInt(x.amount), 0n); return `<div style="font-size:13px;margin-top:6px">${esc(t().approveLbl(one?.token ?? "", p.gas.approval?.mode !== "exact", units(total, one?.decimals ?? 18)))}</div><div class="code">${esc(a.cast)}</div>`; }).join("") : `<div class="muted" style="font-size:13px">${t().none}</div>`;
+        const lines = m.permitted.map((x, i) => { const a = p.actions.find((y) => y.index === p.batchActions[i]); return `${a.index}. ${units(x.amount, a.decimals)} ${a.token} → ${short(a.to)}`; }).join("<br>");
+        $("sign").innerHTML = `<div class="sign"><div><p class="step">${t().p2.s1}</p>${app}</div><div>
+          <p class="step">${t().p2.s2}</p><table class="kv"><tr><td>type</td><td class="num">${typed.primaryType}</td></tr><tr><td>${t().transfers}</td><td class="num">${lines}</td></tr><tr><td>${t().spender}</td><td class="num">${short(m.spender)}</td></tr><tr><td>${t().nonce}</td><td class="num">${short(String(m.nonce))}</td></tr><tr><td>${t().deadline}</td><td>${esc(dl)}</td></tr></table>${raw}
+          <p class="step" style="margin-top:14px">${t().p2.s3}</p><div style="font-size:13px">${t().p2.s3v(p.batchActions.length)}</div></div></div>`;
+      } else {
+        const lines = typed.map((x, i) => { const a = p.actions.find((y) => y.index === p.batchActions[i]); return `<tr><td class="num">#${a.index}</td><td class="num">${units(x.message.value, 6)} USDC → ${short(x.message.to)} · ${t().nonce} ${x.message.nonce.slice(0, 10)}…</td></tr>`; }).join("");
+        $("sign").innerHTML = `<div class="sign"><div><p class="step">${t().e3.s1}</p><table class="kv">${lines}<tr><td>${t().deadline}</td><td>${esc(dl)}</td></tr></table>${raw}</div><div>
+          <p class="step">${t().e3.s2}</p><div style="font-size:13px">${t().e3.s2v(p.batchActions.length, p.policy === "skip-failed")}</div></div></div>`;
+      }
+    }
+
+    function actionList(verify, actions) {
+      return `<ul>${verify.actions.map((a) => { const x = actions.find((y) => y.index === a.index); return `<li><span class="${a.executed ? "y" : "n"}">${a.executed ? "✓" : "✗"}</span> #${a.index} ${esc(x?.label ?? "")} — ${a.executed ? t().happened : t().notHappened}${a.executed ? "" : `<small>${esc(tr(a.reason))}</small>`}</li>`; }).join("")}</ul>`;
+    }
+    function renderFork() {
+      if (!fork) return;
+      $("forkSub").textContent = t().forkSub(n0(fork.A.plan.block.number));
+      const h = (x) => `<div class="hash">${t().forkTx}: ${x}</div>`;
+      const A = fork.A, B = fork.B, C = fork.C;
+      const pA = ((Number(A.oneByOneGasUsed) - Number(A.gasUsed)) / Number(A.oneByOneGasUsed)) * 100;
+      $("fork").innerHTML = [
+        `<div class="card"><span class="tag">A · permit2</span><h3>${t().scen.A[0]}</h3><p class="what">${t().scen.A[1]}</p>${actionList(A.verify, A.actions)}<div class="res">${t().vsOne(n0(A.gasUsed), n0(A.oneByOneGasUsed), pct(pA))}</div><div class="what">${t().est(n0(A.plan.gas.batch.gas), n0(A.gasUsed))}</div>${h(A.hash)}</div>`,
+        `<div class="card"><span class="tag">B · eip3009 + multicall3</span><h3>${t().scen.B[0]}</h3><p class="what">${t().scen.B[1]}</p>${actionList(B.verify, B.actions)}<div class="res">${esc(vsumOf(B.verify))}</div>${h(B.hash)}</div>`,
+        `<div class="card"><span class="tag">C · permit2, atomic</span><h3>${t().scen.C[0]}</h3><p class="what">${t().scen.C[1]}</p><p class="step" style="margin:4px 0 0">${t().reverted}</p><div class="res err">${esc(vsumOf(C.reverted.verify))}</div>${h(C.reverted.hash)}<p class="step" style="margin:8px 0 0">${t().replanned}</p>${actionList(C.recovered.verify, C.actions)}<ul>${C.replan.actions.filter((a) => !a.ok).map((a) => `<li><span class="n">✗</span> #${a.index} ${esc(a.label ?? "")} — ${t().skipped}<small>${esc(tr(a.reason))}</small></li>`).join("")}</ul>${h(C.recovered.hash)}</div>`,
+      ].join("");
+    }
+
+    function renderStatic() {
+      document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+      document.querySelectorAll("[data-i]").forEach((el) => (el.textContent = t()[el.dataset.i]));
+      document.querySelectorAll(".lang button").forEach((b) => b.classList.toggle("on", b.dataset.lang === lang));
+      $("how").innerHTML = t().how.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join("");
+      const r = recorded.payroll?.recordedAt;
+      $("footer").innerHTML = `${r ? esc(t().footer(when(r))) : ""} · <a href="https://github.com/juhzinho/pharos-batch-executor" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/juhzinho/pharos-batch-executor#readme" target="_blank" rel="noopener">README</a>`;
+    }
+    function renderScale() {
+      if (!scaling) return;
+      const top = scaling.points.at(-1);
+      $("scaleSub").textContent = t().scaleSub(n0(scaling.points[0].block), n0(top.block));
+      // each block on its own scale (its largest bar is full width); the % is always against one by one
+      const row = (cls, label, g, base, max) => {
+        const p = ((Number(base) - Number(g)) / Number(base)) * 100;
+        return `<div class="srow"><span>${label}</span><div class="strack"><i class="${cls}" style="width:${(Number(g) / max) * 100}%"></i></div><span class="num">${cls === "one" ? "" : `${p >= 0 ? "−" : "+"}${pct(p)}%`}</span></div>`;
+      };
+      $("scale").innerHTML = `<div class="scale">${scaling.points.map((x) => { const max = Math.max(Number(x.individual), Number(x.permit2), Number(x.eip3009 ?? 0)); return `<div class="spt"><div class="sn num">${x.n}<small>${t().transfersShort}</small></div><div>
+          ${row("one", t().oneByOne, x.individual, x.individual, max)}${row("bat", "permit2", x.permit2, x.individual, max)}${x.eip3009 ? row("e3", "eip3009", x.eip3009, x.individual, max) : ""}
+          <div class="sper num">${t().perTransfer(n0(Math.round(Number(x.individual) / x.n)), n0(Math.round(Number(x.permit2) / x.n)))}</div></div></div>`; }).join("")}</div>`;
+    }
+    function renderAll() { renderTabs(); renderStatic(); renderPlan(); renderGas(); renderScale(); renderSign(); renderFork(); }
+    document.querySelectorAll(".lang button").forEach((b) => (b.onclick = () => { lang = b.dataset.lang; try { localStorage.setItem("batch-lang", lang); } catch {} renderAll(); }));
+
+    $("csv").value = DEFAULT_CSV;
+    $("from").value = "0x6ea08ca8f313d860808ef7431fc72c6fbcf4a72d";
+    try { fork = await (await fetch("runs/fork-proof.json")).json(); } catch {}
+    try { scaling = await (await fetch("runs/scaling.json")).json(); } catch {}
+    await selectTab("payroll");
+  </script>
+</body>
+</html>
