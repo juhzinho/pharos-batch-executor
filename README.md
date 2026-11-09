@@ -5,7 +5,7 @@ payouts, refunds — and turns them into **one transaction** instead of firing t
 signed it checks every action against the wallet, measures the gas both ways on chain, and when something fails it
 says which action, why, and what happened to the rest.
 
-**Live demo:** https://pharos-batch-executor.vercel.app · **Skill:** [skill/pharos-batch-executor/SKILL.md](skill/pharos-batch-executor/SKILL.md)
+**Live demo:** https://pharos-batch-executor-juhzinho.vercel.app · **Skill:** [skill/pharos-batch-executor/SKILL.md](skill/pharos-batch-executor/SKILL.md)
 
 ```
 list (JSON / CSV) ─▶ pre-flight each action ─▶ policy ─┬─ refused  (all-or-nothing and an action would fail)
